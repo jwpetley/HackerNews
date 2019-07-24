@@ -33,10 +33,19 @@ class Post(models.Model):
         else:
             return name
 
+    def set_upvoted(self, user, *, upvoted):
+        if upvoted:
+            PostUpvote.objects.get_or_create(post=self, user=user)
+        else:
+            self.upvotes.filter(id=user.id).delete()
+
+
 class PostUpvote(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
-    user = models.ForeignKey(User, related_name='post_upvotes',
-     on_delete=models.CASCADE)
+    user = models.ForeignKey(User, related_name='post_upvotes', on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ('post', 'user')
 
 class Comment(models.Model):
     creation_date = models.DateTimeField(auto_now_add=True)
@@ -49,8 +58,18 @@ class Comment(models.Model):
     post = models.ForeignKey(Post, related_name='comments', on_delete=models.CASCADE)
     parent = models.ForeignKey('Comment', related_name='replies', on_delete=models.CASCADE, null=True, default=None)
     content = models.TextField(null=True)
-    upvotes = models.ManyToManyField(User, through = 'CommentUpvote')
+    upvotes = models.ManyToManyField(User, through='CommentUpvote')
+
+    def set_upvoted(self, user, *, upvoted):
+        if upvoted:
+            CommentUpvote.objects.get_or_create(comment=self, user=user)
+        else:
+            self.upvotes.filter(id=user.id).delete()
+
 
 class CommentUpvote(models.Model):
     comment = models.ForeignKey(Comment, on_delete=models.CASCADE)
     user = models.ForeignKey(User, related_name='comment_upvotes', on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ('comment', 'user')
