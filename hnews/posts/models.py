@@ -2,6 +2,8 @@ from datetime import datetime, timedelta
 from django.db import models
 from django.contrib.auth.models import User
 from django.template.defaultfilters import pluralize
+from django.utils import timezone
+from urllib.parse import urlparse
 
 # Create your models here.
 class Post(models.Model):
@@ -13,7 +15,7 @@ class Post(models.Model):
     title = models.CharField(max_length=256)
 
     def how_long_ago(self):
-        how_long = datetime.now() - self.creation_date
+        how_long = timezone.now() - self.creation_date
         if how_long < timedelta(minutes=1):
             return f'{how_long.seconds} second{pluralize(how_long.seconds)} ago'
         elif how_long < timedelta(hours=1):
@@ -24,6 +26,12 @@ class Post(models.Model):
             return f'{hours} hour{pluralize(hours)} ago'
         else:
             return f'{how_long.days} day{pluralize(how_long.days)} ago'
+    def get_domain_name(self):
+        name = urlparse(self.url).hostname
+        if name.startswith('www.'):
+            return name[len('www.'):]
+        else:
+            return name
 
 class PostUpvote(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
