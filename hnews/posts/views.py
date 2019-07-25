@@ -47,7 +47,20 @@ class PostListView(ListView):
         ])
         return context
 
-
+def upvote_view(view):
+    @wraps(view)
+    @require_POST
+    @login_required
+    def new_view(request, *args, **kwargs):
+        obj = view(request, *args, **kwargs)
+        try:
+            upvoted = json.loads(request.body.decode('utf-8'))['upvoted']
+        except (json.JSONDecodeError, KeyError):
+            return HttpResponseBadRequest()
+        obj.set_upvoted(request.user, upvoted=upvoted)
+        # 204: No content
+        return HttpResponse(status=204)
+    return new_view
 
 @require_POST
 @login_required
@@ -60,3 +73,28 @@ def set_upvoted_post(request, post_id):
     post.set_upvoted(request.user, upvoted=upvoted)
     # 204: No content
     return HttpResponse(status=204)
+
+
+def create_upvote_view(model):
+    @require_POST
+    @login_required
+    def view(request, id):
+        obj = get_object_or_404(model, id=id)
+        try:
+            upvoted = json.loads(request.body.decode('utf-8'))['upvoted']
+        except (json.JSONDecodeError, KeyError):
+            return HttpResponseBadRequest()
+        obj.set_upvoted(request.user, upvoted=upvoted)
+        # 204: No content
+        return HttpResponse(status=204)
+    return view
+
+
+@upvote_view
+def set_upvoted_post(request, post_id):
+    return get_object_or_404(Post, id=post_id)
+
+
+@upvote_view
+def set_upvoted_comment(request, comment_id):
+    return get_object_or_404(Comment, id=comment_id)

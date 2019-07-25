@@ -7,22 +7,26 @@
 {% endif %}
 
 <div id="app">
-    [[ post.title ]] - [[ post.how_long_ago ]] - [[ post.domain_name ]]
-    <template v-if="is_authenticated">
+    [[ post.title  ]] - [[ post.how_long_ago ]] - [[ post.domain_name ]]
+    {% if user.is_authenticated %}
     - <span v-if="post.upvoted">Upvoted</span><span v-else>Not Upvoted</span>
     - <button v-on:click="upvote(post)">Toggle upvoted</button>
-    </template>
+    {% endif %}
 
 
-    <template v-if="is_authenticated">
+    {% if user.is_authenticated %}
         <form action="" method="post">
             {% csrf_token %}
             {{ form }}
             <input type="submit" value="Submit" />
         </form>
-    </template>
+    {% endif %}
     <ul v-for="comment in post.comments">
-        <comment-comp v-bind:comment="comment" v-on:send_upvote="upvote($event)" v-bind:is_authenticated="is_authenticated"></comment-comp>
+        <li>[[ comment.content ]] - [[ comment.how_long_ago ]]</li>
+        {% if user.is_authenticated %}
+        - <span v-if="comment.upvoted">Upvoted</span><span v-else>Not Upvoted</span>
+        - <button v-on:click="upvote(comment)">Toggle upvoted</button>
+        {% endif %}
     </ul>
 </div>
 
